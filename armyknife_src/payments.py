@@ -138,7 +138,9 @@ def get_subscribe_md(actor=None, config=None):
     if not actor or not config:
         return {}
     my_stripe_url = config.root + 'stripe?id=' + actor.id
-    return "The **ArmyKnife** costs money to operate, would you be willing to pay to support?\n\n" + \
+    return "Did you know that Army Knife costs a minimum of $1.50 a month per user to host? " + \
+           "If you find it helpful and would like to support ongoing future development," + \
+           " please consider subscribing at a level that best fits your budget:\n\n" + \
            "* [Monthly $2.99](" + my_stripe_url + '&plan=monthly2.99' + ")\n\n" + \
            "* [Yearly $29.99](" + my_stripe_url + '&plan=yearly29.99' + ")\n\n" + \
            "* [Monthly $3.99](" + my_stripe_url + '&plan=monthly3.99' + ")\n\n" + \
@@ -170,9 +172,11 @@ def get_subscribe_form(actor=None, config=None):
                             },
                             {
                                 "type": "TextBlock",
-                                "text": "The ArmyKnife costs money to operate, would you be willing to pay to support?",
-                                "isSubtle": "true",
-                                "wrap": "true"
+                                "text": "Did you know that Army Knife costs a minimum of $1.50 a month per user to host? " + \
+                                        "If you find it helpful and would like to support ongoing future development," + \
+                                        " please consider subscribing at a level that best fits your budget:\n\n",
+                                "isSubtle": True,
+                                "wrap": True
                             }
                         ]
                     },
