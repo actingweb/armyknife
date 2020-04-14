@@ -10,6 +10,7 @@ from armyknife_src import fargate
 from actingweb import actor
 from actingweb import auth
 from actingweb import aw_proxy
+from . import payments
 
 
 class WebexTeamsMessageHandler:
@@ -139,7 +140,7 @@ class WebexTeamsMessageHandler:
                         out += " `(last edited: " + timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
                     out += "\n\n---\n\n"
                     for i, el in sorted(toplist.items()):
-                        out = out + "**" + i + "**: " + el + "\n\n"
+                        out = out + "**" + str(i) + "**: " + str(el) + "\n\n"
                     per_user_spark.post_bot_message(
                         email=email_owner,
                         text=out,
@@ -197,10 +198,10 @@ class WebexTeamsMessageHandler:
                         continue
                     per_user_spark.post_bot_message(
                         email=email_owner,
-                        text="**PIN ALERT!! - " + m["comment"] + "**\n\n"
-                                                                 "From " + person['displayName'] +
-                             " (" + person['emails'][0] + ")" +
-                             " in room (" + room['title'] + ")\n\n" +
+                        text="**PIN ALERT!! - " + m["comment"] + "**\n\n" + \
+                             "From " + person['displayName'] + \
+                             " (" + person['emails'][0] + ")" + \
+                             " in room (" + room['title'] + ")\n\n" + \
                              pin['text'] + "\n\n",
                         markdown=True)
                 else:
@@ -237,7 +238,7 @@ class WebexTeamsMessageHandler:
     def get_autoreply_msg(self):
         if not self.spark.me.property.autoreplyMsg:
             return None
-        # Retrieve the last user we responded to and don't reply if it's the same user
+
         last_auto_reply = self.spark.me.property.autoreplyMsg_last
         if last_auto_reply and last_auto_reply == self.spark.person_object.lower():
             return None
@@ -272,6 +273,26 @@ class WebexTeamsMessageHandler:
                 email=self.spark.me.creator,
                 text="**" + display_name + " (" + self.spark.person_data['personEmail'] +
                 ") sent a 1:1 message to you (auto-replied to) :**\n\n" + self.spark.msg_data['text'], markdown=True)
+
+    def message_tracked_live(self):
+        self.spark.enrich_data('account')
+        self.spark.enrich_data('msg')
+        self.spark.enrich_data('room')
+        app_disabled = self.spark.me.property.app_disabled
+        if app_disabled and app_disabled.lower() == 'true':
+            logging.debug("Account is disabled: " + self.spark.me.creator)
+            return
+        if 'title' in self.spark.room_data and 'text' in self.spark.msg_data:
+            sender = self.spark.link.get_person(spark_id=self.spark.person_id)
+            if 'displayName' not in sender:
+                display_name = 'Unknown'
+            else:
+                display_name = sender['displayName']
+            self.spark.link.post_bot_message(
+                email=self.spark.me.creator,
+                text="**" + display_name + " (" + self.spark.person_object +
+                ") in the room " + self.spark.room_data['title'] + ":**\n\n" +
+                self.spark.msg_data['text'], markdown=True)       
 
     def message_mentions(self):
         if 'mentionedPeople' not in self.spark.data:
@@ -486,7 +507,38 @@ class WebexTeamsMessageHandler:
                     text="If you repeatedly get this error message, do /delete DELETENOW "
                          "before a new /init. This will reset your account (note: all settings as well).")
                 logging.info("User (" + self.spark.me.creator + ") got notified about invalid status.")
-            return False
+            return 
+        # Send a one-time message about money support
+        if not self.spark.me.property.sent_money_plea:
+            self.spark.me.property.sent_money_plea = "true"
+            card_cont = payments.get_subscribe_form(actor=self.spark.me, config=self.spark.config)
+            self.spark.link.post_bot_message(
+                    email=self.spark.me.creator,
+                    text=payments.get_subscribe_md(actor=self.spark.me, config=self.spark.config),
+                    markdown=True,
+                    card=card_cont
+                )
+            logging.debug("User (" + self.spark.me.creator + ") got marketing message.")
+        has_trial, has_subscription = payments.check_valid_trial_or_subscription(self.spark.store)
+        if not has_subscription and not has_trial:
+            self.spark.me.property.app_disabled = 'true'
+            card_cont = payments.get_subscribe_form(actor=self.spark.me, config=self.spark.config)
+            self.spark.link.post_bot_message(
+                    email=self.spark.me.creator,
+                    text=payments.get_subscribe_md(actor=self.spark.me, config=self.spark.config),
+                    markdown=True,
+                    card=card_cont
+            )
+            self.spark.link.post_bot_message(
+                    email=self.spark.me.creator,
+                    text="The ArmyKnife has now been disabled to reduce the costs of operating the service. "
+                         "Please consider supporting the ArmyKnife by subscribing! "
+                         "(However, you may use the command `/enable` to get another 30 days.)",
+                    markdown=True
+            )
+            # Reset the timer on trial
+            self.spark.store.save_perm_attribute('first_visit', "today")
+            return
         self.validate_token()
         self.global_actions()
         self.message_autoreply()
@@ -764,7 +816,7 @@ class WebexTeamsMessageHandler:
                              "\n\n**Events**: " + h['resource'] + ":" +
                              h['event'] +
                              "\n\n**Target**: " + h['targetUrl'] +
-                             "\n\n**Created**: " + h['created'] +
+                             "\n\n**Created**: " + h.get('created','-') +
                              "\n\n- - -\n\n",
                         markdown=True
                     )
@@ -797,7 +849,7 @@ class WebexTeamsMessageHandler:
                 text="Started cleaning up ALL webhooks...")
             self.spark.link.clean_all_webhooks(spark_id=self.spark.room_id)
             msghash = hashlib.sha256()
-            msghash.update(self.spark.me.passphrase)
+            msghash.update(self.spark.me.passphrase.encode('utf-8'))
             hook = self.spark.link.register_webhook(
                 name='Firehose',
                 target=self.spark.config.root + self.spark.me.id + '/callbacks/firehose',
@@ -873,7 +925,7 @@ class WebexTeamsMessageHandler:
                         text="Usage: `/deletemember <email> <room-id>` to delete user with <email>"
                              " from a room with <room-id>.\n\n"
                              " or: `/deletemember <email> FORCE count` to delete user with <email>"
-                             " from ALL shared room where count=number of shared rooms (use /checkmember).",
+                             " from ALL shared rooms, where count=number of shared rooms (use /checkmember).",
                         markdown=True)
                     return
                 if not fargate.in_fargate() and not fargate.fargate_disabled():
@@ -1544,7 +1596,11 @@ class WebexTeamsMessageHandler:
         if self.spark.room_id == self.spark.config.bot["admin_room"]:
             logging.debug("Integration firehose in admin room, dropping...")
             return
-        self.spark.store.process_message(self.spark.data)
+        live_trackers = False if self.spark.me.property.live_trackers == 'false' else True
+        # will not store message, but return True if message is tracked
+        tracked = self.spark.store.process_message(self.spark.data, not live_trackers)
+        if tracked and live_trackers:
+            self.message_tracked_live()
         if self.spark.person_id != self.spark.actor_spark_id:
             # We only execute commands in messages from the Cisco Webex Teams user attached
             # to this ArmyKnife actor (not to).
@@ -1561,6 +1617,19 @@ class WebexTeamsMessageHandler:
         if self.spark.cmd == '/fargate':
             fargate.fork_container(self.webobj.request, self.spark.actor_id)
             return
+        """
+        Apr 11, 2020, GTW, disabled as we now don't enforce subscriptions
+        # Global beta users bypass subscriptions and trials!
+        feature_toggles = self.spark.me.property.featureToggles
+        if not feature_toggles or 'beta' not in feature_toggles:
+            abort, msg = payments.check_subscriptions(self.spark.cmd, self.spark.store, 'integration')
+            if msg:
+                self.spark.link.post_bot_message(
+                    email=self.spark.me.creator,
+                    text=msg,
+                    markdown=True)
+            if abort:
+                return """
         if self.spark.room_id == self.spark.chat_room_id:
             # Commands run in the 1:1 bot room that need OAuth rights on behalf
             # of the user to execute

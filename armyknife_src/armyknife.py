@@ -104,7 +104,7 @@ class ArmyKnife:
                 }
         return None
 
-    def process_message(self, msg=None):
+    def process_message(self, msg=None, save=True):
         if not msg:
             return False
         # Is this message from a registered person to track?
@@ -112,6 +112,8 @@ class ArmyKnife:
         person = person_bucket.get_attr(msg['personEmail'])
         if not person:
             return False
+        if not save:
+            return True
         message_bucket = attribute.Attributes(actor_id=self.actor_id, bucket="messages", config=self.config)
         message_bucket.set_attr(
             name=msg['id'],
@@ -276,6 +278,40 @@ class ArmyKnife:
                     })
                     del_msg = attribute.Attributes("pinned", m, config=self.config)
                     del_msg.delete_attr(a)
+        return ret
+
+    def save_perm_attribute(self, name=None, value=None):
+        if not name:
+            return False
+        if not value:
+            value = ''
+        now = datetime.datetime.utcnow()
+        now = now.replace(tzinfo=pytz.utc)
+        bucket = attribute.Attributes("perm", self.actor_id, config=self.config)
+        bucket.set_attr(
+            name,
+            data=value,
+            timestamp=now
+        )
+        return True
+
+    def get_perm_attribute(self, name=None):
+        if not name:
+            return None
+        perm_bucket = attribute.Attributes('perm', self.actor_id, config=self.config)
+        return perm_bucket.get_attr(name)
+
+    def get_perm_attributes(self):
+        perm_attrs = attribute.Attributes('perm', self.actor_id, config=self.config)
+        attrs = perm_attrs.get_bucket()
+        ret = {}
+        if not attrs:
+            return ret
+        for p, v in attrs.items():
+            ret[p] = {
+                'data': v['data'],
+                'timestamp': v['timestamp']
+            }
         return ret
 
     def stats_incr_command(self, command=None):
