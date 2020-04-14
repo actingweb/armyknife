@@ -2,6 +2,7 @@ import json
 import datetime
 import logging
 from actingweb import actor, attribute, auth
+from .armyknife import ArmyKnife
 from armyknife_src import fargate
 from armyknife_src import ciscowebexteams
 from . import payments
@@ -285,9 +286,40 @@ class WebexTeamsBotHandler:
                      json.dumps(props, sort_keys=True, indent=4),
                 markdown=True)
             attrs = attribute.Buckets(actor_id=actor_id, config=self.spark.config).fetch()
+            for k,v in attrs.items():
+                for k2,v2 in v.items():
+                    if 'timestamp' in v2:
+                        if v2['timestamp']: 
+                            attrs[k][k2]['timestamp'] = datetime.datetime.strftime(v2['timestamp'], "%Y-%m-%d %H:%M")
             self.spark.link.post_admin_message(
                 text=json.dumps(attrs, sort_keys=True, indent=4),
                 markdown=True)
+            store = ArmyKnife(actor_id, self.spark.config)
+            perms = store.get_perm_attributes()
+            for k,v in perms.items():
+                timestamp = datetime.datetime.strftime(v['timestamp'], "%Y-%m-%d %H:%M")
+                self.spark.link.post_admin_message(
+                    text="**" + timestamp + ":** " + json.dumps(v['data'], sort_keys=True, indent=4),
+                    markdown=True)
+        elif self.spark.cmd == "/subscriptiondelete":
+            if len(self.spark.msg_list_wcap) < 2:
+                self.spark.link.post_admin_message("Usage: `/subscriptiondelete <email|id>`",
+                                                   markdown=True)
+                return
+            acc = self.spark.msg_list_wcap[2]
+            if '@' in acc:
+                owner = actor.Actor(config=self.spark.config)
+                owner.get_from_creator(acc)
+                actor_id = owner.id
+            else:
+                owner = actor.Actor(actor_id=acc, config=self.spark.config)
+                actor_id = acc
+            if not actor_id:
+                self.spark.link.post_admin_message("Could not find " + acc, markdown=True)
+                return
+            perm_bucket = attribute.Attributes('perm', actor_id, config=self.spark.config)
+            perm_bucket.delete_attr('subscription')
+            self.spark.link.post_admin_message("Deleted subscription for " + acc, markdown=True)
         elif self.spark.cmd == "/stats":
             stats = self.spark.store.get_stats_commands()
             out = ""
