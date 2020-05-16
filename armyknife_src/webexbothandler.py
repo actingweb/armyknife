@@ -150,6 +150,12 @@ class WebexTeamsBotHandler:
                 else:
                     if msg_filter == 'creator':
                         attr = a.creator
+                    if msg_filter == 'subscription':
+                        store = ArmyKnife(actor_id=u["id"], config=self.spark.config)
+                        if payments.check_valid_subscription(store.get_perm_attribute('subscription')):
+                            attr = 'true'
+                        else:
+                            attr = 'false'
                     else:
                         attr = a.property[str(msg_filter)]
                 if not attr and filter_value and filter_value == "None":
