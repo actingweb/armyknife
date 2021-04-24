@@ -9,17 +9,17 @@ name = "pypi"
 #name = "pypitest"
 
 [packages]
-Flask = "*"
-uWSGI = "*"
+Jinja2 = "2.11.3"
+Flask = "1.1.2"
+uWSGI = "2.0.19.1"
+pytz = "2021.1"
 #actingweb = {path = "./../actingweb", editable = true}
 #actingweb = {version="*", index="pypitest"}
-actingweb = "*"
-pytz = "*"
-boto3 = "*"
-stripe = "*"
+actingweb = "2.6.5"
+stripe = "2.56.0"
 
 [dev-packages]
-pydevd = "*"
+pydevd-pycharm = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"

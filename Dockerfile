@@ -1,19 +1,14 @@
-FROM python:alpine3.6
-MAINTAINER support@greger.io
+FROM python:3.7-slim-buster
 
-RUN addgroup -g 1000 -S uwsgi && \
-    adduser -u 1000 -S uwsgi -G uwsgi
+RUN useradd -ms /bin/bash uwsgi
 RUN mkdir /src
 WORKDIR /src
 COPY Pipfile.lock /src/
 COPY Pipfile /src/
-RUN mkdir -p /var/cache/apk \
-    && ln -s /var/cache/apk /etc/apk/cache
-RUN apk update \
-    && apk add --no-cache -u build-base linux-headers libffi-dev libressl-dev \
-    && pip install --upgrade pip==18.0 && pip install pipenv
+RUN apt-get update \
+    && apt-get -y install build-essential python python-dev \
+    && pip install --upgrade pip && pip install pipenv
 COPY . /src
-RUN pipenv install --system --ignore-pipfile
-RUN apk cache clean
+RUN pipenv install --dev --system --ignore-pipfile
 EXPOSE 5000
-CMD ["/src/run.sh"]
+#ENTRYPOINT ["/src/run.sh"]

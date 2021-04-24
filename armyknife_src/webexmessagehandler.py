@@ -1156,7 +1156,7 @@ class WebexTeamsMessageHandler:
             self.spark.link.post_bot_message(
                 email=self.spark.me.creator,
                 text="Your app is available and can be authorized at " + app['baseuri'] +
-                     "/www\n\n" +
+                     "/www?refresh=true\n\n" +
                      "Then use /appconfig to configure it.")
         elif self.spark.cmd == '/noapp':
             if len(self.spark.msg_list) > 1:

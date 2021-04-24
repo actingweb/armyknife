@@ -66,11 +66,6 @@ class OnAWWebexTeams(on_aw.OnAWBase):
             return None
         elif len(path) > 0 and path[0] in PROP_PROTECT:
             return None
-        if path and len(path) >= 1 and path[0] == 'config':
-            if 'watchLabels' in new:
-                new_labels = new['watchLabels']
-                gm = gmail.GMail(self.myself, self.config, self.auth)
-                gm.create_watch(labels=new_labels, refresh=True)
         return new
 
     def post_properties(self, prop: str, data: dict) -> dict or None:
