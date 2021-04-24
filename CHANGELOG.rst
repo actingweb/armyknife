@@ -2,6 +2,16 @@
 CHANGELOG
 =========
 
+Apr 24, 2021
+------------
+- Update to actingweb 2.4.5 and latest libs
+- Upgrade serverless and update serverless.yml
+- Upgrade to python3.7
+
+Apr 14, 2020
+------------
+- Add Stripe payment support
+
 Jan 29, 2019
 ------------
 - Improve fargate detection code, add fargate_disabled(), add default debug logging

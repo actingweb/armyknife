@@ -25,6 +25,7 @@ provider:
   timeout: 30
   stage: dev
   region: us-west-1
+  lambdaHashingVersion: '20201221'
   environment:
     LOG_LEVEL: 'DEBUG'
     APP_HOST_FQDN: 'me.greger.io'
@@ -42,30 +43,36 @@ provider:
     APP_BOT_ADMIN_ROOM: ''
     APP_OAUTH_ID: ''
     APP_OAUTH_KEY: ''
+    STRIPE_WEBHOOK_SECRET: ''
+    STRIPE_API_KEY: ''
+    STRIPE_PUBLIC_KEY: ''
+    PYNAMODB_CONFIG: './armyknife_src/pynamodb_config.py'
 
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:CreateTable
-        - dynamodb:DescribeTable
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.db_prefix}_*"
-    - Effect: "Allow"
-      Action:
-        - ecs:RunTask
-      Resource: "*"
-    - Effect: Allow
-      Action:
-        - iam:PassRole
-      Resource: ${self:custom.execRoleArn}
+ iam:
+    role:   
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:CreateTable
+            - dynamodb:DescribeTable
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.db_prefix}_*"
+        - Effect: "Allow"
+          Action:
+            - ecs:RunTask
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - iam:PassRole
+          Resource: ${self:custom.execRoleArn}
 functions:
   app:
     handler: wsgi_handler.handler
     events:
       - http: ANY /
-      - http: 'ANY {proxy+}'
+      - http: 'ANY /{proxy+}'
