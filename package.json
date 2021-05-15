@@ -3,7 +3,7 @@
   "description": "",
   "version": "0.1.0",
   "dependencies": {
-    "serverless": "^2.35.0"
+    "serverless": "^2.41.2"
   },
   "devDependencies": {
     "serverless-pseudo-parameters": "^2.4.0",
