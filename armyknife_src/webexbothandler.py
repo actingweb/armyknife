@@ -62,21 +62,6 @@ class WebexTeamsBotHandler:
             return
         msg = self.spark.msg_data['text']
         users = actor.Actors(config=self.spark.config).fetch()
-        if len(self.spark.msg_list) < 3 or self.spark.msg_list[2] == 'help':
-            self.spark.link.post_admin_message(
-                "**Usage of /all-users**\n\n"
-                "count: Make a count of all users\n\n"
-                "list: List all users\n\n"
-                "countfilter/listfilter/markfilter/storefilter: Make a count, list, or mark a set of users.\n\n"
-                "countfilter/listfilter/markfilter/storefilter can all be used with `attr` and `attr value`\n\n"
-                "where no value means any users with attr set, and value = None mean attr not set.\n\n"
-                "If value is supplied, only users with attr matching value will be matched."
-                "When a set of users have been marked, the following commands can be used:\n\n"
-                "marked-message `msg`: Send msg to all users\n\n"
-                "marked-list: List all users marked\n\n"
-                "marked-clear: Clear all users marked\n\n"
-                "marked-delete: Delete all accounts marked \n\n", markdown=True)
-            return
         cmd = self.spark.msg_list[2].lower()
         counters = {"total": 0}
         out = ""
@@ -243,7 +228,7 @@ class WebexTeamsBotHandler:
                                                ":\n\n" + message,
                                                markdown=True)
         elif self.spark.cmd == "/set_toggles":
-            if len(self.spark.msg_list_wcap) < 2:
+            if len(self.spark.msg_list_wcap) < 3:
                 self.spark.link.post_admin_message("Usage: `/set_toggles <email|id> <toggle1,toggle2>`. Use None to clear toggles.",
                                                    markdown=True)
                 return
@@ -262,17 +247,18 @@ class WebexTeamsBotHandler:
             toggles = owner.property.featureToggles
             if not toggles:
                 toggles = ''
-            self.spark.link.post_admin_message("Current toggles: <" + str(toggles) + ">",
-                                               markdown=True)
-            if len(self.spark.msg_list[3]) > 0:
-                if self.spark.msg_list[3] == 'none':
-                    owner.property.featureToggles = None
-                else:
-                    owner.property.featureToggles = self.spark.msg_list[3]
-                self.spark.link.post_admin_message("Set toggles to: <" + str(owner.property.featureToggles) + ">",
-                                                   markdown=True)
+            self.spark.link.post_admin_message(
+                "Current toggles: <" + toggles + ">")
+            if len(self.spark.msg_list) > 3:
+                if self.spark.msg_list[3] and len(self.spark.msg_list[3]) > 0:
+                    if self.spark.msg_list[3] == 'none':
+                        owner.property.featureToggles = None
+                    else:
+                        owner.property.featureToggles = self.spark.msg_list[3]
+                    self.spark.link.post_admin_message(
+                        "Set toggles to: <" + self.spark.msg_list[3] + ">")
         elif self.spark.cmd == "/account":
-            if len(self.spark.msg_list_wcap) < 2:
+            if len(self.spark.msg_list_wcap) < 3:
                 self.spark.link.post_admin_message("Usage: `/account <email|id>`",
                                                    markdown=True)
                 return
@@ -400,7 +386,21 @@ class WebexTeamsBotHandler:
                 "Use `/subscriptiondelete <email>` to delete a subscription.",
                 markdown=True)
         elif self.spark.cmd == "/all-users":
-            if not fargate.in_fargate() and not fargate.fargate_disabled():
+            if len(self.spark.msg_list) < 3 or self.spark.msg_list[2] == 'help':
+                self.spark.link.post_admin_message(
+                    "**Usage of /all-users**\n\n"
+                    "count: Make a count of all users\n\n"
+                    "list: List all users\n\n"
+                    "countfilter/listfilter/markfilter/storefilter: Make a count, list, or mark a set of users.\n\n"
+                    "countfilter/listfilter/markfilter/storefilter can all be used with `attr` and `attr value`\n\n"
+                    "where no value means any users with attr set, and value = None mean attr not set.\n\n"
+                    "If value is supplied, only users with attr matching value will be matched."
+                    "When a set of users have been marked, the following commands can be used:\n\n"
+                    "marked-message `msg`: Send msg to all users\n\n"
+                    "marked-list: List all users marked\n\n"
+                    "marked-clear: Clear all users marked\n\n"
+                    "marked-delete: Delete all accounts marked \n\n", markdown=True)
+            elif not fargate.in_fargate() and not fargate.fargate_disabled():
                 self.spark.link.post_admin_message(
                     "You requested a tough task! I will call upon one of my workers to do /all-users tasks...",
                     markdown=True)
