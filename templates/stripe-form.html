@@ -1,56 +1,57 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <title>Subscribe to the Army Knife</title>
 
-    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/css/materialize.min.css'>
-    <link rel='stylesheet prefetch' href='https://fonts.googleapis.com/css?family=Architects+Daughter|Roboto&subset=latin,devanagari'>
-    <link rel="stylesheet" href='/static/style.css'>
+  <link rel='stylesheet prefetch'
+    href='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/css/materialize.min.css'>
+  <link rel='stylesheet prefetch'
+    href='https://fonts.googleapis.com/css?family=Architects+Daughter|Roboto&subset=latin,devanagari'>
+  <link rel="stylesheet" href='/static/style.css'>
 
   <style>
+    .StripeElement {
+      box-sizing: border-box;
 
-.StripeElement {
-  box-sizing: border-box;
+      height: 40px;
 
-  height: 40px;
+      padding: 10px 12px;
 
-  padding: 10px 12px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background-color: #f1eaff;
 
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background-color: #f1eaff;
+      box-shadow: 0 1px 3px 0 #77aef0;
+      -webkit-transition: box-shadow 150ms ease;
+      transition: box-shadow 150ms ease;
+    }
 
-  box-shadow: 0 1px 3px 0 #77aef0;
-  -webkit-transition: box-shadow 150ms ease;
-  transition: box-shadow 150ms ease;
-}
+    .StripeElement--focus {
+      box-shadow: 0 1px 3px 0 #88b6e4;
+    }
 
-.StripeElement--focus {
-  box-shadow: 0 1px 3px 0 #88b6e4;
-}
+    .StripeElement--invalid {
+      border-color: #fa755a;
+    }
 
-.StripeElement--invalid {
-  border-color: #fa755a;
-}
+    .StripeElement--webkit-autofill {
+      background-color: #fefde5 !important;
+    }
 
-.StripeElement--webkit-autofill {
-  background-color: #fefde5 !important;
-}
-button {
-  display: block;
-  width: calc(100% - 30px);
-  height: 40px;
-  margin: 0 15px;
-  background-color: #696cfc;
-  border-radius: 20px;
-  color: #f2f4f8;
-  font-weight: 600;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
+    button {
+      display: block;
+      width: calc(100% - 30px);
+      height: 40px;
+      margin: 0 15px;
+      background-color: #696cfc;
+      border-radius: 20px;
+      color: #f2f4f8;
+      font-weight: 600;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
   </style>
   <script src="https://js.stripe.com/v3/"></script>
 </head>
@@ -63,16 +64,17 @@ button {
 
       <h1 class="title grey-text text-darken-3">Subscribe to the Army Knife!</h1>
 
-      <blockquote class="flow-text">When subscribing to the ArmyKnife, you help supporting the work to improve the bot, as well
-          as contribute to the costs of hosting the bot with Amazon Web Services.
+      <blockquote class="flow-text">When subscribing to the ArmyKnife, you help supporting the work to improve the bot,
+        as well
+        as contribute to the costs of hosting the bot with Amazon Web Services.
       </blockquote>
 
-    <div>
+      <div>
         <form action="/stripe" method="post" id="payment-form">
-            <input type="hidden" name="id" value="{{ ACTOR_ID }}">
-            <input type="hidden" name="plan" value="{{ PLAN }}">
-            <input type="radio" id="term" name="term" checked="checked" value={{ TERM }}>
-            <label for="term">{{ TERM }} {{ AMOUNT }}</label>
+          <input type="hidden" name="id" value="{{ ACTOR_ID }}">
+          <input type="hidden" name="plan" value="{{ PLAN }}">
+          <input type="radio" id="term" name="term" checked="checked" value={{ TERM }}>
+          <label for="term">{{ TERM }} {{ AMOUNT }}</label>
           <div class="form-row">
             <label for="card-element">
               Credit or debit card
@@ -85,9 +87,9 @@ button {
           </div>
           <button>Submit Payment</button>
         </form>
-    </div>
+      </div>
       <footer class="page-footer deep-purple lighten-5">
-          <div class="grey-text text-darken-3">Support: <a href="mailto:support@greger.io">support@greger.io</a>
+        <div class="grey-text text-darken-3">Support: <a href="mailto:support@greger.io">support@greger.io</a>
         </div>
       </footer>
     </span>
@@ -97,20 +99,20 @@ button {
 <script src="https://js.stripe.com/v3"></script>
 
 <script>
-function stripeTokenHandler(token) {
-  // Insert the token ID into the form so it gets submitted to the server
-  var form = document.getElementById('payment-form');
-  var hiddenInput = document.createElement('input');
-  hiddenInput.setAttribute('type', 'hidden');
-  hiddenInput.setAttribute('name', 'stripeToken');
-  hiddenInput.setAttribute('value', token.id);
-  form.appendChild(hiddenInput);
+  function stripeTokenHandler(token) {
+    // Insert the token ID into the form so it gets submitted to the server
+    var form = document.getElementById('payment-form');
+    var hiddenInput = document.createElement('input');
+    hiddenInput.setAttribute('type', 'hidden');
+    hiddenInput.setAttribute('name', 'stripeToken');
+    hiddenInput.setAttribute('value', token.id);
+    form.appendChild(hiddenInput);
 
-  // Submit the form
-  form.submit();
-}
+    // Submit the form
+    form.submit();
+  }
 
-var stripe = Stripe('pk_test_LWrQJLMJgvPWgtXfdMemnA4a');
+  var stripe = Stripe('{{ KEY }}');
   var elements = stripe.elements({
     fonts: [
       {
@@ -119,54 +121,55 @@ var stripe = Stripe('pk_test_LWrQJLMJgvPWgtXfdMemnA4a');
     ]
   });
 
-var style = {
-  base: {
-    color: '#32325d',
-    lineHeight: '26px',
-    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-    fontSmoothing: 'antialiased',
-    fontSize: '24px',
-    '::placeholder': {
-      color: '#aab7c4'
+  var style = {
+    base: {
+      color: '#32325d',
+      lineHeight: '26px',
+      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+      fontSmoothing: 'antialiased',
+      fontSize: '24px',
+      '::placeholder': {
+        color: '#aab7c4'
+      }
+    },
+    invalid: {
+      color: '#fa755a',
+      iconColor: '#fa755a'
     }
-  },
-  invalid: {
-    color: '#fa755a',
-    iconColor: '#fa755a'
-  }
-};
+  };
 
-// Create an instance of the card Element.
-var card = elements.create('card', {style: style});
+  // Create an instance of the card Element.
+  var card = elements.create('card', { style: style });
 
-// Add an instance of the card Element into the `card-element` <div>.
-card.mount('#card-element');
+  // Add an instance of the card Element into the `card-element` <div>.
+  card.mount('#card-element');
 
-card.addEventListener('change', function(event) {
-  var displayError = document.getElementById('card-errors');
-  if (event.error) {
-    displayError.textContent = event.error.message;
-  } else {
-    displayError.textContent = '';
-  }
-});
-
-// Create a token or display an error when the form is submitted.
-var form = document.getElementById('payment-form');
-form.addEventListener('submit', function(event) {
-  event.preventDefault();
-
-  stripe.createToken(card).then(function(result) {
-    if (result.error) {
-      // Inform the customer that there was an error.
-      var errorElement = document.getElementById('card-errors');
-      errorElement.textContent = result.error.message;
+  card.addEventListener('change', function (event) {
+    var displayError = document.getElementById('card-errors');
+    if (event.error) {
+      displayError.textContent = event.error.message;
     } else {
-      // Send the token to your server.
-      stripeTokenHandler(result.token);
+      displayError.textContent = '';
     }
   });
-});
+
+  // Create a token or display an error when the form is submitted.
+  var form = document.getElementById('payment-form');
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    stripe.createToken(card).then(function (result) {
+      if (result.error) {
+        // Inform the customer that there was an error.
+        var errorElement = document.getElementById('card-errors');
+        errorElement.textContent = result.error.message;
+      } else {
+        // Send the token to your server.
+        stripeTokenHandler(result.token);
+      }
+    });
+  });
 
 </script>
+
 </html>

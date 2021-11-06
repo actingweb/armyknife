@@ -2,6 +2,14 @@
 CHANGELOG
 =========
 
+Nov 6, 2021
+-----------
+- Fix stripe key error in from
+- Add support for beta and paid flags in featureToggles to avoid disabling
+- Assorted linting
+- Add support for admin /set_toggles command
+- Improve formatting of admin /account command
+
 Apr 24, 2021
 ------------
 - Update to actingweb 2.4.5 and latest libs
