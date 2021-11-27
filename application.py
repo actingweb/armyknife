@@ -443,7 +443,8 @@ def app_stripe():
         'ACTOR_ID': str(request.values['id']),
         'PLAN': plan,
         'AMOUNT': payments.PLAN_NAMES[plan]['amount'],
-        'TERM': term
+        'TERM': term,
+        'KEY': os.getenv('STRIPE_PUBLIC_KEY', 'pk_test_LWrQJLMJgvPWgtXfdMemnA4a')
     }
     if request.method == 'GET':
         return render_template('stripe-form.html', **template_values)

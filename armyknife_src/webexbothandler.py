@@ -62,21 +62,6 @@ class WebexTeamsBotHandler:
             return
         msg = self.spark.msg_data['text']
         users = actor.Actors(config=self.spark.config).fetch()
-        if len(self.spark.msg_list) < 3 or self.spark.msg_list[2] == 'help':
-            self.spark.link.post_admin_message(
-                "**Usage of /all-users**\n\n"
-                "count: Make a count of all users\n\n"
-                "list: List all users\n\n"
-                "countfilter/listfilter/markfilter/storefilter: Make a count, list, or mark a set of users.\n\n"
-                "countfilter/listfilter/markfilter/storefilter can all be used with `attr` and `attr value`\n\n"
-                "where no value means any users with attr set, and value = None mean attr not set.\n\n"
-                "If value is supplied, only users with attr matching value will be matched."
-                "When a set of users have been marked, the following commands can be used:\n\n"
-                "marked-message `msg`: Send msg to all users\n\n"
-                "marked-list: List all users marked\n\n"
-                "marked-clear: Clear all users marked\n\n"
-                "marked-delete: Delete all accounts marked \n\n", markdown=True)
-            return
         cmd = self.spark.msg_list[2].lower()
         counters = {"total": 0}
         out = ""
@@ -85,7 +70,8 @@ class WebexTeamsBotHandler:
                 msg_filter = self.spark.msg_list[3]
             else:
                 self.spark.link.post_admin_message(
-                    "You need to supply a filter: /all-users " + str(cmd) + " `filter value(optional)`",
+                    "You need to supply a filter: /all-users " +
+                    str(cmd) + " `filter value(optional)`",
                     markdown=True)
                 return
         else:
@@ -96,9 +82,9 @@ class WebexTeamsBotHandler:
             filter_value = None
         if cmd == "marked-message" and len(self.spark.msg_list) >= 4:
             msg_markdown = msg[
-                           len(self.spark.msg_list[0]) +
-                           len(self.spark.msg_list[1]) +
-                           len(self.spark.msg_list[2]) + 2:]
+                len(self.spark.msg_list[0]) +
+                len(self.spark.msg_list[1]) +
+                len(self.spark.msg_list[2]) + 2:]
         else:
             msg_markdown = None
         if cmd == "list":
@@ -130,7 +116,9 @@ class WebexTeamsBotHandler:
             elif filter_value == "None":
                 out += "without attribute " + str(msg_filter) + "**\n\n"
             else:
-                out += "with attribute " + str(msg_filter) + " containing " + str(filter_value) + "**\n\n"
+                out += "with attribute " + \
+                    str(msg_filter) + " containing " + \
+                    str(filter_value) + "**\n\n"
         if len(out) > 0:
             self.spark.link.post_admin_message(out, markdown=True)
             out = ""
@@ -143,7 +131,9 @@ class WebexTeamsBotHandler:
             else:
                 counters[str(service_status)] = 1
             if cmd == "list":
-                out += "**" + a.creator + "** (" + str(a.id) + "): " + str(service_status or "None") + "\n\n"
+                out += "**" + a.creator + \
+                    "** (" + str(a.id) + "): " + \
+                    str(service_status or "None") + "\n\n"
             elif 'filter' in cmd:
                 if cmd == 'storefilter':
                     attr = a.store[str(msg_filter)]
@@ -151,7 +141,8 @@ class WebexTeamsBotHandler:
                     if msg_filter == 'creator':
                         attr = a.creator
                     if msg_filter == 'subscription':
-                        store = ArmyKnife(actor_id=u["id"], config=self.spark.config)
+                        store = ArmyKnife(
+                            actor_id=u["id"], config=self.spark.config)
                         if payments.check_valid_subscription(store.get_perm_attribute('subscription')):
                             attr = 'true'
                         else:
@@ -166,7 +157,9 @@ class WebexTeamsBotHandler:
                     else:
                         counters[str(msg_filter)] = 1
                     if cmd == "listfilter":
-                        out += "**" + a.creator + "** (" + str(a.id) + "): " + str(service_status or "None") + "\n\n"
+                        out += "**" + a.creator + \
+                            "** (" + str(a.id) + "): " + \
+                            str(service_status or "None") + "\n\n"
                     elif cmd == "markfilter" or cmd == "storefilter":
                         out += a.creator + " marked.\n\n"
                         a.property.filter_mark = 'true'
@@ -213,7 +206,8 @@ class WebexTeamsBotHandler:
                 out = ""
         if len(out) > 0:
             self.spark.link.post_admin_message(out, markdown=True)
-        out = "----\n\n**Grand total number of users**: " + str(counters["total"]) + "\n\n"
+        out = "----\n\n**Grand total number of users**: " + \
+            str(counters["total"]) + "\n\n"
         del (counters["total"])
         for k, v in counters.items():
             out += str(k) + ": " + str(v) + "\n\n"
@@ -225,15 +219,46 @@ class WebexTeamsBotHandler:
 
         if self.spark.cmd == "/mail":
             message = self.spark.msg_data['text'][
-                      len(self.spark.msg_list_wcap[0]) +
-                      len(self.spark.msg_list_wcap[1]) +
-                      len(self.spark.msg_list_wcap[2]) + 3:]
-            self.spark.link.post_bot_message(email=self.spark.msg_list[2], text=message)
+                len(self.spark.msg_list_wcap[0]) +
+                len(self.spark.msg_list_wcap[1]) +
+                len(self.spark.msg_list_wcap[2]) + 3:]
+            self.spark.link.post_bot_message(
+                email=self.spark.msg_list[2], text=message)
             self.spark.link.post_admin_message("Sent the following message to " + self.spark.msg_list[2] +
                                                ":\n\n" + message,
                                                markdown=True)
+        elif self.spark.cmd == "/set_toggles":
+            if len(self.spark.msg_list_wcap) < 3:
+                self.spark.link.post_admin_message("Usage: `/set_toggles <email|id> <toggle1,toggle2>`. Use None to clear toggles.",
+                                                   markdown=True)
+                return
+            acc = self.spark.msg_list_wcap[2]
+            if '@' in acc:
+                owner = actor.Actor(config=self.spark.config)
+                owner.get_from_creator(acc)
+                actor_id = owner.id
+            else:
+                owner = actor.Actor(actor_id=acc, config=self.spark.config)
+                actor_id = acc
+            if not actor_id:
+                self.spark.link.post_admin_message(
+                    "Could not find " + acc, markdown=True)
+                return
+            toggles = owner.property.featureToggles
+            if not toggles:
+                toggles = ''
+            self.spark.link.post_admin_message(
+                "Current toggles: <" + toggles + ">")
+            if len(self.spark.msg_list) > 3:
+                if self.spark.msg_list[3] and len(self.spark.msg_list[3]) > 0:
+                    if self.spark.msg_list[3] == 'none':
+                        owner.property.featureToggles = None
+                    else:
+                        owner.property.featureToggles = self.spark.msg_list[3]
+                    self.spark.link.post_admin_message(
+                        "Set toggles to: <" + self.spark.msg_list[3] + ">")
         elif self.spark.cmd == "/account":
-            if len(self.spark.msg_list_wcap) < 2:
+            if len(self.spark.msg_list_wcap) < 3:
                 self.spark.link.post_admin_message("Usage: `/account <email|id>`",
                                                    markdown=True)
                 return
@@ -246,7 +271,8 @@ class WebexTeamsBotHandler:
                 owner = actor.Actor(actor_id=acc, config=self.spark.config)
                 actor_id = acc
             if not actor_id:
-                self.spark.link.post_admin_message("Could not find " + acc, markdown=True)
+                self.spark.link.post_admin_message(
+                    "Could not find " + acc, markdown=True)
                 return
             owner_auth = auth.Auth(actor_id=actor_id, config=self.spark.config)
             owner_spark = ciscowebexteams.CiscoWebexTeams(auth=owner_auth, actor_id=actor_id,
@@ -260,11 +286,13 @@ class WebexTeamsBotHandler:
             else:
                 self.spark.link.post_admin_message(
                     text="**Cisco Webex Teams Account**  \n----  \n" +
-                         "**Cisco Webex Teams nickname**: " + me_data['nickName'] + "  \n"
+                         "**Cisco Webex Teams nickname**: " +
+                    me_data['nickName'] + "  \n"
                          "**Cisco Webex Teams id**: " +
                          me_data['id'] + "  \n"
-                         "**Cisco Webex Teams avatar**: " + (me_data['avatar'] or '') + "  \n"
-                         "The account is enabled and fully functioning!",
+                         "**Cisco Webex Teams avatar**: " +
+                    (me_data['avatar'] or '') + "  \n"
+                    "The account is enabled and fully functioning!",
                     markdown=True)
             firehose = owner.property.firehoseId
             if not firehose:
@@ -288,24 +316,32 @@ class WebexTeamsBotHandler:
                     markdown=True)
             props = owner.get_properties()
             self.spark.link.post_admin_message(
-                text="**Army Knife Account Data**  \n----  \n" +
+                text="**Army Knife Account Property Data**  \n----  \n" +
                      json.dumps(props, sort_keys=True, indent=4),
                 markdown=True)
-            attrs = attribute.Buckets(actor_id=actor_id, config=self.spark.config).fetch()
-            for k,v in attrs.items():
-                for k2,v2 in v.items():
+            attrs = attribute.Buckets(
+                actor_id=actor_id, config=self.spark.config).fetch()
+            for k, v in attrs.items():
+                for k2, v2 in v.items():
                     if 'timestamp' in v2:
-                        if v2['timestamp']: 
-                            attrs[k][k2]['timestamp'] = datetime.datetime.strftime(v2['timestamp'], "%Y-%m-%d %H:%M")
+                        if v2['timestamp']:
+                            attrs[k][k2]['timestamp'] = datetime.datetime.strftime(
+                                v2['timestamp'], "%Y-%m-%d %H:%M")
             self.spark.link.post_admin_message(
-                text=json.dumps(attrs, sort_keys=True, indent=4),
+                text="**Army Knife Account Attribute Data**  \n----  \n" +
+                json.dumps(attrs, sort_keys=True, indent=4),
                 markdown=True)
             store = ArmyKnife(actor_id, self.spark.config)
             perms = store.get_perm_attributes()
-            for k,v in perms.items():
-                timestamp = datetime.datetime.strftime(v['timestamp'], "%Y-%m-%d %H:%M")
+            self.spark.link.post_admin_message(
+                text="**Army Knife Account Permanent Data**  \n----  \n",
+                markdown=True)
+            for k, v in perms.items():
+                timestamp = datetime.datetime.strftime(
+                    v['timestamp'], "%Y-%m-%d %H:%M")
                 self.spark.link.post_admin_message(
-                    text="**" + timestamp + ":** " + json.dumps(v['data'], sort_keys=True, indent=4),
+                    text="**" + timestamp + ":** " +
+                    json.dumps(v['data'], sort_keys=True, indent=4),
                     markdown=True)
         elif self.spark.cmd == "/subscriptiondelete":
             if len(self.spark.msg_list_wcap) < 2:
@@ -321,11 +357,14 @@ class WebexTeamsBotHandler:
                 owner = actor.Actor(actor_id=acc, config=self.spark.config)
                 actor_id = acc
             if not actor_id:
-                self.spark.link.post_admin_message("Could not find " + acc, markdown=True)
+                self.spark.link.post_admin_message(
+                    "Could not find " + acc, markdown=True)
                 return
-            perm_bucket = attribute.Attributes('perm', actor_id, config=self.spark.config)
+            perm_bucket = attribute.Attributes(
+                'perm', actor_id, config=self.spark.config)
             perm_bucket.delete_attr('subscription')
-            self.spark.link.post_admin_message("Deleted subscription for " + acc, markdown=True)
+            self.spark.link.post_admin_message(
+                "Deleted subscription for " + acc, markdown=True)
         elif self.spark.cmd == "/stats":
             stats = self.spark.store.get_stats_commands()
             out = ""
@@ -342,14 +381,31 @@ class WebexTeamsBotHandler:
                 "Use `/mail <email> message` to send somebody a message from the bot.\n\n"
                 "Use `/all-users` for listing and messaging all users.\n\n"
                 "Use `/stats` to see statistics on command usage.\n\n"
-                "Use `/account <email> to get get details on a user",
+                "Use `/account <email>` to get details on a user",
+                "Use `/set_toggles <email> <toggle1,toggle1>` to get/set toggles on a user. Use None to clear toggles.",
+                "Use `/subscriptiondelete <email>` to delete a subscription.",
                 markdown=True)
         elif self.spark.cmd == "/all-users":
-            if not fargate.in_fargate() and not fargate.fargate_disabled():
+            if len(self.spark.msg_list) < 3 or self.spark.msg_list[2] == 'help':
+                self.spark.link.post_admin_message(
+                    "**Usage of /all-users**\n\n"
+                    "count: Make a count of all users\n\n"
+                    "list: List all users\n\n"
+                    "countfilter/listfilter/markfilter/storefilter: Make a count, list, or mark a set of users.\n\n"
+                    "countfilter/listfilter/markfilter/storefilter can all be used with `attr` and `attr value`\n\n"
+                    "where no value means any users with attr set, and value = None mean attr not set.\n\n"
+                    "If value is supplied, only users with attr matching value will be matched."
+                    "When a set of users have been marked, the following commands can be used:\n\n"
+                    "marked-message `msg`: Send msg to all users\n\n"
+                    "marked-list: List all users marked\n\n"
+                    "marked-clear: Clear all users marked\n\n"
+                    "marked-delete: Delete all accounts marked \n\n", markdown=True)
+            elif not fargate.in_fargate() and not fargate.fargate_disabled():
                 self.spark.link.post_admin_message(
                     "You requested a tough task! I will call upon one of my workers to do /all-users tasks...",
                     markdown=True)
-                fargate.fork_container(self.webobj.request, self.spark.actor_id)
+                fargate.fork_container(
+                    self.webobj.request, self.spark.actor_id)
             else:
                 self.exec_all_users()
         else:
@@ -527,7 +583,8 @@ class WebexTeamsBotHandler:
                         text="Will start to store messages instead of tracking live.",
                         markdown=True)
                 return
-            added = self.spark.store.add_tracker(self.spark.msg_list[1], self.spark.msg_list[2])
+            added = self.spark.store.add_tracker(
+                self.spark.msg_list[1], self.spark.msg_list[2])
             if added:
                 self.spark.link.post_bot_message(
                     email=self.spark.person_object,
@@ -586,8 +643,10 @@ class WebexTeamsBotHandler:
                 out = "**" + topofmind['title'] + "**"
                 modified = self.spark.me.property.topofmind_modified
                 if modified:
-                    timestamp = datetime.datetime.strptime(modified, "%Y-%m-%d %H:%M")
-                    out += " `(last edited: " + timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
+                    timestamp = datetime.datetime.strptime(
+                        modified, "%Y-%m-%d %H:%M")
+                    out += " `(last edited: " + \
+                        timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
                 out += "\n\n---\n\n"
                 for i, el in sorted(toplist.items()):
                     out = out + "**" + i + "**: " + el + "\n\n"
@@ -603,24 +662,29 @@ class WebexTeamsBotHandler:
             self.spark.me.property.topofmind_modified = None
             topofmind['list'] = {}
             out = json.dumps(topofmind)
-            self.spark.me.register_diffs(target='properties', subtarget='topofmind', blob=out)
+            self.spark.me.register_diffs(
+                target='properties', subtarget='topofmind', blob=out)
             self.spark.link.post_bot_message(
                 email=self.spark.person_object,
                 text="Cleared your " + topofmind['title'])
             return
         if index == "subscriptions":
-            subs = self.spark.me.get_subscriptions(target='properties', subtarget='topofmind', callback=True)
+            subs = self.spark.me.get_subscriptions(
+                target='properties', subtarget='topofmind', callback=True)
             if len(subs) > 0:
                 out = "**Your Top Of Mind subscriptions on others**\n\n"
             else:
                 out = ''
             for s in subs:
-                out += "Subscription " + s["subscriptionid"] + " on peer " + s["peerid"] + "\n\n"
-            subs = self.spark.me.get_subscriptions(target='properties', subtarget='topofmind', callback=False)
+                out += "Subscription " + \
+                    s["subscriptionid"] + " on peer " + s["peerid"] + "\n\n"
+            subs = self.spark.me.get_subscriptions(
+                target='properties', subtarget='topofmind', callback=False)
             if len(subs) > 0:
                 out += "----\n\n**Others subscribing to your Top Of Mind**\n\n"
             for s in subs:
-                out += "Subscription " + s["subscriptionid"] + " from peer " + s["peerid"] + "\n\n"
+                out += "Subscription " + \
+                    s["subscriptionid"] + " from peer " + s["peerid"] + "\n\n"
             if len(out) > 0:
                 self.spark.link.post_bot_message(
                     email=self.spark.person_object,
@@ -639,8 +703,8 @@ class WebexTeamsBotHandler:
                     text="Use: /topofmind title <Your new list title>")
                 return
             topofmind['title'] = self.spark.msg_data['text'][
-                                 len(self.spark.msg_list_wcap[0]) +
-                                 len(self.spark.msg_list_wcap[1]) + 2:]
+                len(self.spark.msg_list_wcap[0]) +
+                len(self.spark.msg_list_wcap[1]) + 2:]
             out = json.dumps(topofmind, ensure_ascii=False)
             self.spark.me.property.topofmind = out
             self.spark.link.post_bot_message(
@@ -663,7 +727,8 @@ class WebexTeamsBotHandler:
                 else:
                     targettime = now + datetime.timedelta(days=1)
                 self.spark.store.delete_pinned_messages(comment="#/TOPOFMIND")
-                self.spark.store.save_pinned_message(comment='#/TOPOFMIND', timestamp=targettime)
+                self.spark.store.save_pinned_message(
+                    comment='#/TOPOFMIND', timestamp=targettime)
                 self.spark.link.post_bot_message(
                     email=self.spark.person_object,
                     text="Set reminder of " + topofmind['title'] + " with first alert at " +
@@ -676,10 +741,11 @@ class WebexTeamsBotHandler:
             return
         if index:
             listitem = self.spark.msg_data['text'][
-                       len(self.spark.msg_list_wcap[0]) +
-                       len(self.spark.msg_list_wcap[1]) + 2:]
+                len(self.spark.msg_list_wcap[0]) +
+                len(self.spark.msg_list_wcap[1]) + 2:]
             now = datetime.datetime.utcnow()
-            self.spark.me.property.topofmind_modified = now.strftime('%Y-%m-%d %H:%M')
+            self.spark.me.property.topofmind_modified = now.strftime(
+                '%Y-%m-%d %H:%M')
             if listitem == "delete":
                 del (toplist[index])
                 self.spark.link.post_bot_message(
@@ -710,7 +776,8 @@ class WebexTeamsBotHandler:
                         toplist = newlist
                         self.spark.link.post_bot_message(
                             email=self.spark.person_object,
-                            text="**Inserted list item " + str(index) + "** with text " + listitem,
+                            text="**Inserted list item " +
+                            str(index) + "** with text " + listitem,
                             markdown=True)
                 except ValueError:
                     self.spark.link.post_bot_message(
@@ -721,19 +788,23 @@ class WebexTeamsBotHandler:
                 toplist[index] = listitem
                 self.spark.link.post_bot_message(
                     email=self.spark.person_object,
-                    text="Added list item **" + str(index) + "** with text `" + toplist[index] + "`",
+                    text="Added list item **" +
+                    str(index) + "** with text `" + toplist[index] + "`",
                     markdown=True)
             topofmind['list'] = toplist
             out = json.dumps(topofmind, sort_keys=True, ensure_ascii=False)
             self.spark.me.property.topofmind = out
-            self.spark.me.register_diffs(target='properties', subtarget='topofmind', blob=out)
+            self.spark.me.register_diffs(
+                target='properties', subtarget='topofmind', blob=out)
             # List out the updated list
             toplist = json.loads(out, strict=False)['list']
             out = "**" + topofmind['title'] + "**"
             modified = self.spark.me.property.topofmind_modified
             if modified:
-                timestamp = datetime.datetime.strptime(modified, "%Y-%m-%d %H:%M")
-                out += " `(last edited: " + timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
+                timestamp = datetime.datetime.strptime(
+                    modified, "%Y-%m-%d %H:%M")
+                out += " `(last edited: " + \
+                    timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
             out += "\n\n---\n\n"
             for i, el in sorted(toplist.items()):
                 out = out + "**" + str(i) + "**: " + str(el) + "\n\n"
@@ -776,8 +847,10 @@ class WebexTeamsBotHandler:
                 out = "**" + todo['title'] + "**"
                 modified = self.spark.me.property.todo_modified
                 if modified:
-                    timestamp = datetime.datetime.strptime(modified, "%Y-%m-%d %H:%M")
-                    out += " `(last edited: " + timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
+                    timestamp = datetime.datetime.strptime(
+                        modified, "%Y-%m-%d %H:%M")
+                    out += " `(last edited: " + \
+                        timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
                 out += "\n\n---\n\n"
                 for i, el in sorted(toplist.items()):
                     out = out + "**" + str(i+1) + "**: " + el + "\n\n"
@@ -811,7 +884,8 @@ class WebexTeamsBotHandler:
                 else:
                     targettime = now + datetime.timedelta(days=1)
                 self.spark.store.delete_pinned_messages(comment="#/TODO")
-                self.spark.store.save_pinned_message(comment='#/TODO', timestamp=targettime)
+                self.spark.store.save_pinned_message(
+                    comment='#/TODO', timestamp=targettime)
                 self.spark.link.post_bot_message(
                     email=self.spark.person_object,
                     text="Set reminder of " + todo['title'] + " with first alert at " +
@@ -850,12 +924,13 @@ class WebexTeamsBotHandler:
             toplist = newlist
         else:
             listitem = self.spark.msg_data['text'][
-                       len(self.spark.msg_list_wcap[0]) + 1:]
+                len(self.spark.msg_list_wcap[0]) + 1:]
             index = len(toplist)
             toplist[index] = listitem
             self.spark.link.post_bot_message(
                 email=self.spark.person_object,
-                text="Added list item **" + str(index+1) + "** with text `" + toplist[index] + "`",
+                text="Added list item **" +
+                str(index+1) + "** with text `" + toplist[index] + "`",
                 markdown=True)
         todo['list'] = toplist
         out = json.dumps(todo, sort_keys=True, ensure_ascii=False)
@@ -865,7 +940,8 @@ class WebexTeamsBotHandler:
         modified = self.spark.me.property.todo_modified
         if modified:
             timestamp = datetime.datetime.strptime(modified, "%Y-%m-%d %H:%M")
-            out += " `(last edited: " + timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
+            out += " `(last edited: " + \
+                timestamp.strftime('%Y-%m-%d %H:%M') + " UTC)`\n\n"
         out += "\n\n---\n\n"
         for i, el in sorted(toplist.items()):
             out = out + "**" + str(i+1) + "**: " + el + "\n\n"
@@ -896,7 +972,8 @@ class WebexTeamsBotHandler:
                 out = 'Your subscription was cancelled.\n\nYour paid for service ends on ' + \
                       end.strftime('%Y-%m-%d %H:%M') + ' (UTC).\n\n'
             else:
-                out = 'Your subscription expired on ' + end.strftime('%Y-%m-%d %H:%M') + ' (UTC).\n\n'
+                out = 'Your subscription expired on ' + \
+                    end.strftime('%Y-%m-%d %H:%M') + ' (UTC).\n\n'
             sand_card = True
         else:
             out = "You don't have an active subscription.\n\n"
@@ -907,17 +984,20 @@ class WebexTeamsBotHandler:
             markdown=True
         )
         if send_card:
-            card_cont = payments.get_subscribe_form(actor=self.spark.me, config=self.spark.config)
+            card_cont = payments.get_subscribe_form(
+                actor=self.spark.me, config=self.spark.config)
             self.spark.link.post_bot_message(
-                    email=self.spark.me.creator,
-                    text=payments.get_subscribe_md(actor=self.spark.me, config=self.spark.config),
-                    markdown=True,
-                    card=card_cont
+                email=self.spark.me.creator,
+                text=payments.get_subscribe_md(
+                    actor=self.spark.me, config=self.spark.config),
+                markdown=True,
+                card=card_cont
             )
 
     def messages_created(self):
         if not self.spark.room_id:
-            logging.error("Got a message-created event, but roomId was not set")
+            logging.error(
+                "Got a message-created event, but roomId was not set")
             return
         # Ignore all messages from sparkbots
         if not self.spark.person_object:
@@ -1022,7 +1102,8 @@ class WebexTeamsBotHandler:
                     text="**Your Army Knife Account Data**  \n----  \n" +
                          json.dumps(props, sort_keys=True, indent=4),
                     markdown=True)
-                attrs = attribute.Buckets(actor_id=self.spark.me.id, config=self.spark.config).fetch()
+                attrs = attribute.Buckets(
+                    actor_id=self.spark.me.id, config=self.spark.config).fetch()
                 self.spark.link.post_bot_message(
                     email=self.spark.person_object,
                     text=json.dumps(attrs, sort_keys=True, indent=4),
@@ -1053,8 +1134,8 @@ class WebexTeamsBotHandler:
                          "e.g. `/recommend john@gmail.com Hey! Check out this cool app!`")
                 return
             message = self.spark.msg_data['text'][
-                      len(self.spark.msg_list_wcap[0]) +
-                      len(self.spark.msg_list_wcap[1]) + 2:]
+                len(self.spark.msg_list_wcap[0]) +
+                len(self.spark.msg_list_wcap[1]) + 2:]
             self.spark.link.post_bot_message(
                 email=self.spark.msg_list[1],
                 text=message + "\n\n**This bot, Army Knife, was recommended to you by " +
@@ -1062,7 +1143,8 @@ class WebexTeamsBotHandler:
                 markdown=True)
             self.spark.link.post_bot_message(
                 email=self.spark.person_object,
-                text=self.spark.msg_list[1] + " was just invited to use Army Knife!",
+                text=self.spark.msg_list[1] +
+                " was just invited to use Army Knife!",
                 markdown=True)
             self.spark.link.post_admin_message(
                 text=self.spark.msg_list[1] + " was just recommended Army Knife by " +
@@ -1121,8 +1203,10 @@ class WebexTeamsBotHandler:
                     email=self.spark.me.creator,
                     text="Deleted _internal key " + keyname + ".")
             else:
-                message_bucket = attribute.Attributes(self.spark.actor_id, bucket, config=self.spark.config)
-                attrs = attribute.Buckets(actor_id=self.spark.me.id, config=self.spark.config).fetch()
+                message_bucket = attribute.Attributes(
+                    self.spark.actor_id, bucket, config=self.spark.config)
+                attrs = attribute.Buckets(
+                    actor_id=self.spark.me.id, config=self.spark.config).fetch()
                 values = message_bucket.get_bucket()
                 if keyname in values:
                     message_bucket.delete_attr(keyname)
@@ -1152,12 +1236,13 @@ class WebexTeamsBotHandler:
         elif self.spark.cmd == '/topofmind' or self.spark.cmd == '/tom':
             self.topofmind_commands()
             return
-        elif self.spark.cmd == '/todo'or self.spark.cmd == '/followup' or self.spark.cmd == '/fu' or \
+        elif self.spark.cmd == '/todo' or self.spark.cmd == '/followup' or self.spark.cmd == '/fu' or \
                 self.spark.cmd == '/done':
             self.todo_commands()
             return
         elif self.spark.cmd == '/autoreply':
-            reply_msg = self.spark.msg_data['text'][len(self.spark.msg_list[0]):]
+            reply_msg = self.spark.msg_data['text'][len(
+                self.spark.msg_list[0]):]
             self.spark.me.property.autoreplyMsg = reply_msg
             self.spark.link.post_bot_message(
                 email=self.spark.person_object,
