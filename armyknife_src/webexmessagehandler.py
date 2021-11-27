@@ -285,9 +285,13 @@ class WebexTeamsMessageHandler:
                 display_name = "Unknown name"
             else:
                 display_name = self.spark.person_data['displayName']
+            if 'personEmail' not in self.spark.person_data:
+                person_email = "Unknown email"
+            else:
+                person_email = self.spark.person_data['personEmail']
             self.spark.link.post_bot_message(
                 email=self.spark.me.creator,
-                text="**" + display_name + " (" + self.spark.person_data['personEmail'] +
+                text="**" + display_name + " (" + person_email +
                 ") sent a 1:1 message to you (auto-replied to) :**\n\n" + self.spark.msg_data['text'], markdown=True)
 
     def message_tracked_live(self):
@@ -547,7 +551,8 @@ class WebexTeamsMessageHandler:
                           ") got marketing message.")
         has_trial, has_subscription = payments.check_valid_trial_or_subscription(
             self.spark.store)
-        if not has_subscription and not has_trial and not ('paid' or 'beta') in self.spark.me.property.featureToggles:
+        if not has_subscription and not has_trial and \
+                (self.spark.me.property.featureToggles and not ('paid' or 'beta') in self.spark.me.property.featureToggles):
             self.spark.me.property.app_disabled = 'true'
             card_cont = payments.get_subscribe_form(
                 actor=self.spark.me, config=self.spark.config)
