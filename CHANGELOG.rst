@@ -2,6 +2,12 @@
 CHANGELOG
 =========
 
+Nov 27, 2021
+------------
+- Fix bug in check of featureToggles (added by support for beta+paid flags on Nov 6)
+- Fix bug when personEmail is not set from Webex for a sender of email to an account with
+  autoreply set
+
 Nov 6, 2021
 -----------
 - Fix stripe key error in from
